@@ -32,7 +32,7 @@ jobs:
                 outputs: type=docker,dest=${{ runner.temp }}/image.tar
 
             - name: Upload Image artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v7
               with:
                 name: react-app-image
                 path: ${{ runner.temp }}/image.tar
@@ -50,7 +50,7 @@ jobs:
         steps:
 
             - name: download Image artifact
-              uses: actions/download-artifact@v3
+              uses: actions/download-artifact@v7
               with:
                 name: react-app-image
                 path: ${{ runner.temp }}
