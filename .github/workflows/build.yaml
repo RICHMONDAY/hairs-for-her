@@ -12,10 +12,18 @@ env:
 jobs:
     build:
         runs-on: ubuntu-latest
+        
+        outputs:
+         image_name_lowercase: ${{ steps.repo-name.outputs.image_name_lowercase }}
+        
 
         steps:
             - name: Checkout code
               uses: actions/checkout@v3
+
+            - name: Repo name to lower case
+              id: repo-name
+              run: echo "image_name_lowercase=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
@@ -25,7 +33,7 @@ jobs:
               with:
                 context: .
                 push: false
-                tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+                tags: ${{ env.REGISTRY }}/${{ steps.repo-name.outputs.image_name_lowercase }}:${{ github.sha }}
                 build-args: |
                   VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
                   VITE_SUPABASE_PUBLISHABLE_KEY=${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
@@ -61,7 +69,7 @@ jobs:
             - name: Scan Image with Trivy
               uses: aquasecurity/trivy-action@v1
               with:
-                image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+                image-ref: ${{ env.REGISTRY }}/${{ needs.build.outputs.image_name_lowercase }}:${{ github.sha }}
                 format: 'table'
                 exit-code: '1'
                 severity: 'CRITICAL,HIGH'
@@ -74,7 +82,7 @@ jobs:
                 password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Push Image to GitHub Container Registry
-              run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+              run: docker push ${{ env.REGISTRY }}/${{ needs.build.outputs.image_name_lowercase }}:${{ github.sha }}
 
             
 
