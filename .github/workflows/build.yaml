@@ -12,7 +12,7 @@ env:
 jobs:
     build:
         runs-on: ubuntu-latest
-        
+
         outputs:
          image_name_lowercase: ${{ steps.repo-name.outputs.image_name_lowercase }}
         
@@ -67,7 +67,7 @@ jobs:
               run: docker load -i ${{ runner.temp }}/image.tar
 
             - name: Scan Image with Trivy
-              uses: aquasecurity/trivy-action@v1
+              uses: aquasecurity/trivy-action@v0.36.0
               with:
                 image-ref: ${{ env.REGISTRY }}/${{ needs.build.outputs.image_name_lowercase }}:${{ github.sha }}
                 format: 'table'
