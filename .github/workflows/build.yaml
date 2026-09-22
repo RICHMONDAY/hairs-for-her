@@ -1,0 +1,85 @@
+name: Docker build, scan and push 
+
+on:
+  push:
+    branches:
+        - main
+
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+
+            - name: Build and export Image artifact
+              uses: docker/build-push-action@7
+              with:
+                context: .
+                push: false
+                tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+                build-args: |
+                  VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
+                  VITE_SUPABASE_PUBLISHABLE_KEY=${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+                outputs: type=docker,dest=${{ runner.temp }}/image.tar
+
+            - name: Upload Image artifact
+              uses: actions/upload-artifact@v3
+              with:
+                name: react-app-image
+                path: ${{ runner.temp }}/image.tar
+                retention-days: 1
+
+
+    Scan-and-push:
+        runs-on: ubuntu-latest
+        needs: build
+
+        permissions:
+            contents: read
+            packages: write
+
+        steps:
+
+            - name: download Image artifact
+              uses: actions/download-artifact@v3
+              with:
+                name: react-app-image
+                path: ${{ runner.temp }}
+
+            - name: load Image artifact
+              run: docker load -i ${{ runner.temp }}/image.tar
+
+            - name: Scan Image with Trivy
+              uses: aquasecurity/trivy-action@v1
+              with:
+                image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+                format: 'table'
+                exit-code: '1'
+                severity: 'CRITICAL,HIGH'
+
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v2
+              with:
+                registry: ${{ env.REGISTRY }}
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Push Image to GitHub Container Registry
+              run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+            
+
+
+
+
+
+          
