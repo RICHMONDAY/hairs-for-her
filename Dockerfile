@@ -21,7 +21,7 @@ RUN npm run build
 # stage 2 - NGINX Webserver
 #----------------------
 
-FROM nginx:1.25-alpine
+FROM nginx:alpine3.24
 
 RUN rm /usr/share/nginx/html/*
 
