@@ -35,7 +35,7 @@ jobs:
                 push: false
                 pull: true
                 cache-from: type=gha
-                cachec-to: type=gha,mode=max
+                cache-to: type=gha,mode=max
                 tags: ${{ env.REGISTRY }}/${{ steps.repo-name.outputs.image_name_lowercase }}:${{ github.sha }}
                 build-args: |
                   VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
